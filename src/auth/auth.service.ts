@@ -61,9 +61,12 @@ export class AuthService extends PrismaClient implements OnModuleInit {
     const { email, password } = createUserDto;
     const verifyEmail = await this.user.findFirst({ where: { email } });
 
+    // Validar que el email no este registrado
     if (verifyEmail) throw new BadRequestException('Email ya registrado');
 
+    // Encriptar contraseña
     const hashPassword = await this.hashPassword(password);
+
     return this.user.create({
       data: { ...createUserDto, password: hashPassword },
     });
@@ -73,10 +76,13 @@ export class AuthService extends PrismaClient implements OnModuleInit {
     const { email, password } = credentials;
     const user = await this.user.findUnique({ where: { email } });
 
+    // Validar que el usuario exista
     if (!user) throw new UnauthorizedException('User not found');
 
+    // Validar contraseña
     const isPasswordValid = await this.checkPassword(password, user.password);
 
+    // Si la contraseña no es válida
     if (!isPasswordValid) throw new UnauthorizedException('Invalid password');
 
     const userToken = {
@@ -85,6 +91,7 @@ export class AuthService extends PrismaClient implements OnModuleInit {
       rol: user.rol,
     };
 
+    // Generar token
     const token = this.createToken(userToken);
 
     return { user, token };
